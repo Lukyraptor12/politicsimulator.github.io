@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Presidente Mundial — Edición Cartográfica</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  --bg: #1e1812;
+  --paper: #f3e6cb;
+  --paper-dark: #e4d1aa;
+  --ink: #2a1d12;
+  --ink-muted: #5c4632;
+  --accent: #8b261d;
+  --gold: #b8860b;
+  --border: #8c6d46;
+  --sea: #c8d2c5;
+  --sea-deep: #b3c2b0;
+  --btn: #dfcba5;
+  --input: #fbf5e8;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(45, 34, 24, 0.4) 0%, rgba(15, 11, 8, 0.9) 100%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 2px, transparent 2px, transparent 4px);
+  color: var(--ink);
+  font-family: 'Crimson Pro', Georgia, serif;
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 14px;
+  padding: 14px;
+  min-height: 100vh;
+}
+
+@media (max-width: 920px) {
+  body { grid-template-columns: 1fr; }
+}
+
+.pn {
+  background-color: var(--paper);
+  background-image: 
+    radial-gradient(ellipse at center, transparent 55%, rgba(139, 109, 70, 0.28) 100%),
+    linear-gradient(to bottom, rgba(255,255,255,0.2), rgba(0,0,0,0.04));
+  border: 2px solid var(--border);
+  outline: 4px double var(--border);
+  outline-offset: -7px;
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65), inset 0 0 30px rgba(139, 109, 70, 0.2);
+  position: relative;
+}
+
+h1 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px double var(--border);
+  padding-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h1 span.sub {
+  font-size: 13px;
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+h3 {
+  font-family: 'Cinzel', Georgia, serif;
+  margin: 12px 0 6px;
+  font-size: 11px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  border-bottom: 1px solid rgba(140, 109, 70, 0.4);
+  padding-bottom: 2px;
+}
+
+/* Estilos del Mapa Vintage */
+.map-frame {
+  border: 3px solid var(--ink);
+  outline: 1px solid var(--border);
+  outline-offset: 2px;
+  background: var(--sea);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: inset 0 0 25px rgba(42, 29, 18, 0.35);
+}
+
+svg {
+  width: 100%;
+  display: block;
+  user-select: none;
+}
+
+path.land {
+  stroke: #3b2a1a;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition: filter 0.2s, stroke-width 0.2s;
+}
+
+path.land:hover {
+  filter: brightness(1.08) contrast(1.05);
+}
+
+path.sel {
+  stroke: #8b261d;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(139, 38, 29, 0.6));
+}
+
+path.atk {
+  stroke: #a8201a;
+  stroke-width: 2.2;
+  stroke-dasharray: 6 3;
+}
+
+path.ally {
+  stroke: #2c5e3b;
+  stroke-width: 2.2;
+  stroke-dasharray: 3 3;
+}
+
+.sea-route {
+  stroke: rgba(59, 42, 26, 0.35);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 4;
+  fill: none;
+  pointer-events: none;
+}
+
+.grid-line {
+  stroke: rgba(59, 42, 26, 0.14);
+  stroke-width: 0.8;
+  pointer-events: none;
+}
+
+text.map-lbl {
+  pointer-events: none;
+  font-family: 'Cinzel', serif;
+  font-size: 10.5px;
+  fill: #1c130b;
+  text-anchor: middle;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  paint-order: stroke;
+  stroke: rgba(243, 230, 203, 0.85);
+  stroke-width: 2.8px;
+}
+
+text.s {
+  pointer-events: none;
+  font-family: 'Crimson Pro', serif;
+  font-size: 11px;
+  font-weight: 700;
+  fill: #2a1d12;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: rgba(243, 230, 203, 0.85);
+  stroke-width: 2.2px;
+}
+
+text.decor-txt {
+  font-family: 'Cinzel', serif;
+  font-style: italic;
+  fill: rgba(42, 29, 18, 0.32);
+  font-size: 11px;
+  letter-spacing: 3px;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+/* Botones y Controles Vintage */
+button {
+  background: linear-gradient(to bottom, #ead9b7, #d6be92);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(42, 29, 18, 0.25), inset 0 1px 0 rgba(255,255,255,0.5);
+  border-radius: 3px;
+  padding: 6px 9px;
+  cursor: pointer;
+  margin: 2px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+button:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #f2e4c7, #dec89e);
+  border-color: var(--ink);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+button.pr {
+  background: linear-gradient(to bottom, #9e2f24, #781e15);
+  color: #f9efd9;
+  border-color: #4a100a;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+}
+
+button.pr:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #b33629, #8c2319);
+}
+
+select, input[type="text"], input:not([type="range"]) {
+  background: var(--input);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 6px 8px;
+  width: 100%;
+  font-family: 'Crimson Pro', serif;
+  font-size: 15px;
+  box-shadow: inset 0 1px 3px rgba(42, 29, 18, 0.15);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+#log {
+  height: 155px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.35;
+  background: var(--input);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 2px 5px rgba(42, 29, 18, 0.15);
+  border-radius: 3px;
+  padding: 8px 10px;
+  margin-top: 10px;
+}
+
+#log div {
+  border-bottom: 1px dashed rgba(140, 109, 70, 0.25);
+  padding: 2px 0;
+}
+#log div:last-child { border-bottom: none; }
+#log .b { color: #9e241b; font-weight: 600; }
+#log .g { color: #245c36; font-weight: 600; }
+#log .y { color: #8a5a00; font-style: italic; font-weight: 600; }
+
+.st {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  padding: 2px 0;
+}
+
+.bar {
+  height: 7px;
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  margin: 2px 0 6px;
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  transition: width 0.3s;
+}
+
+#menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 13, 9, 0.85);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+  padding: env(safe-area-inset-top, 0px) 12px env(safe-area-inset-bottom, 0px);
+}
+
+#menu .pn {
+  max-width: 450px;
+  width: 100%;
+}
+
+.rank {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.pips {
+  color: var(--accent);
+  letter-spacing: 3px;
+  font-size: 14px;
+}
+
+small {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--ink);
+  margin-right: 4px;
+  vertical-align: middle;
+}
+</style>
+</head>
+<body>
+
+<div class="pn">
+  <h1>
+    <span>🧭 Atlas Geopolítico</span>
+    <span class="sub">Año de Gracia · Mes <span id="turn">1</span></span>
+  </h1>
+  <div class="map-frame">
+    <svg id="map" viewBox="0 0 1000 500"></svg>
+  </div>
+  <div id="log"></div>
+</div>
+
+<div class="pn" id="side"></div>
+
+<div id="menu">
+  <div class="pn">
+    <h1 id="mt">Presidente Mundial</h1>
+    <div style="font-size:15px">Rango Diplomático: <span class="rank" id="rk"></span> · Prestigio <b id="elo"></b></div>
+    
+    <h3>Nación Soberana</h3>
+    <select id="pick"></select>
+    
+    <h3>Complejidad Histórica</h3>
+    <select id="diff">
+      <option value="0">Pacífica (Fácil)</option>
+      <option value="1" selected>Realista (Normal)</option>
+      <option value="2">Imperio en Guerra (Difícil)</option>
+    </select>
+    
+    <p style="color:var(--ink-muted);font-size:14px;line-height:1.35;margin:10px 0">
+      Dispones de <b>3 decretos por mes</b>. Alcanza la hegemonía conquistando las 12 regiones o sosteniendo 7 o más durante 3 meses seguidos. Caerás si tu capital (★) es tomada o si tu aprobación llega a cero.
+    </p>
+    
+    <h3>Cifrado Secreto</h3>
+    <div style="display:flex;gap:6px">
+      <input id="cod" placeholder="Introduce clave telegráfica..." onkeydown="if(event.key=='Enter')codigo()">
+      <button onclick="codigo()">Validar</button>
+    </div>
+    <small id="cm"></small><br><br>
+    
+    <button class="pr" style="width:100%;padding:10px" onclick="start()">Firmar Acta de Investidura</button>
+  </div>
+</div>
+
+<script>
+// Siluetas cartográficas realistas (Proyección estilo Robinson / Mercator antiguo)
+const R = [
+  {
+    id: 0, n: "Norteamérica", c: [175, 145], nb: [1, 3, 6],
+    d: "M 55,82 L 85,68 L 125,62 L 160,48 L 215,44 L 265,42 L 295,55 L 285,78 L 258,86 L 245,76 L 225,85 L 245,105 L 278,108 L 292,126 L 265,148 L 242,175 L 222,195 L 212,216 L 204,205 L 206,184 L 185,188 L 168,204 L 152,195 L 136,172 L 122,140 L 105,112 L 72,104 L 48,96 Z M 305,36 L 355,30 L 372,54 L 340,76 L 312,68 Z"
+  },
+  {
+    id: 1, n: "Centroamérica", c: [215, 242], nb: [0, 2, 4],
+    d: "M 168,204 L 185,188 L 206,184 L 204,205 L 212,216 L 228,214 L 234,225 L 218,236 L 236,248 L 256,262 L 268,274 L 258,280 L 240,268 L 216,252 L 194,234 Z M 248,224 L 274,226 L 278,233 L 252,232 Z"
+  },
+  {
+    id: 2, n: "Sudamérica", c: [315, 345], nb: [1, 4],
+    d: "M 268,274 L 296,268 L 328,282 L 368,308 L 386,332 L 372,366 L 348,396 L 325,432 L 312,462 L 296,464 L 292,435 L 296,392 L 286,356 L 265,326 L 262,294 Z"
+  },
+  {
+    id: 3, n: "Europa", c: [505, 118], nb: [0, 4, 6, 7],
+    d: "M 442,148 L 444,132 L 462,126 L 468,112 L 485,105 L 492,82 L 515,62 L 542,60 L 552,78 L 538,96 L 558,102 L 568,125 L 558,146 L 538,150 L 528,162 L 518,158 L 512,142 L 498,156 L 490,144 L 474,145 L 460,154 L 442,152 Z M 452,106 L 465,102 L 468,118 L 454,120 Z"
+  },
+  {
+    id: 4, n: "África Norte", c: [505, 205], nb: [1, 2, 3, 5, 7],
+    d: "M 438,168 L 468,162 L 496,166 L 525,174 L 554,178 L 566,204 L 588,228 L 574,248 L 548,252 L 515,248 L 485,244 L 452,242 L 434,224 L 430,196 Z"
+  },
+  {
+    id: 5, n: "África Sur", c: [535, 315], nb: [4, 7],
+    d: "M 485,244 L 515,248 L 548,252 L 574,248 L 568,284 L 556,324 L 542,366 L 522,382 L 506,368 L 498,325 L 492,282 Z M 576,332 L 586,328 L 584,356 L 574,358 Z"
+  },
+  {
+    id: 6, n: "Rusia", c: [705, 95], nb: [0, 3, 7, 9],
+    d: "M 552,78 L 582,64 L 635,54 L 705,50 L 785,54 L 865,64 L 915,74 L 892,94 L 855,98 L 835,124 L 795,122 L 755,134 L 695,136 L 642,138 L 605,146 L 568,125 L 558,102 Z"
+  },
+  {
+    id: 7, n: "Oriente Medio", c: [608, 185], nb: [3, 4, 5, 6, 8],
+    d: "M 558,146 L 605,146 L 642,138 L 656,164 L 648,192 L 626,216 L 598,224 L 578,198 L 566,174 Z"
+  },
+  {
+    id: 8, n: "India", c: [692, 195], nb: [7, 9, 10],
+    d: "M 642,138 L 695,136 L 725,158 L 732,184 L 712,216 L 694,244 L 680,222 L 664,192 L 648,192 L 656,164 Z"
+  },
+  {
+    id: 9, n: "China", c: [785, 165], nb: [6, 8, 10],
+    d: "M 695,136 L 755,134 L 795,122 L 835,124 L 852,146 L 844,178 L 818,202 L 775,204 L 745,194 L 732,184 L 725,158 Z M 866,144 L 876,142 L 874,168 L 862,172 Z"
+  },
+  {
+    id: 10, n: "Sudeste Asia", c: [778, 245], nb: [8, 9, 11],
+    d: "M 732,184 L 745,194 L 775,204 L 788,226 L 776,254 L 762,258 L 754,234 L 740,212 Z M 748,274 L 796,282 L 802,294 L 752,288 Z M 812,256 L 846,262 L 848,284 L 810,280 Z M 822,218 L 834,216 L 838,242 L 824,244 Z"
+  },
+  {
+    id: 11, n: "Oceanía", c: [848, 368], nb: [10],
+    d: "M 792,336 L 826,322 L 862,318 L 888,338 L 894,372 L 874,398 L 842,396 L 815,382 L 788,376 Z M 912,404 L 928,396 L 932,418 L 914,424 Z"
+  }
+];
+
+R.forEach(r => r.nb.forEach(k => { if (!R[k].nb.includes(r.id)) R[k].nb.push(r.id); }));
+
+// Paleta de tintas cartográficas antiguas (tonos apagados y minerales)
+const COL = [
+  "#c86d51", // Terracota
+  "#6b8e9b", // Azul pizarra
+  "#7a9a65", // Verde salvia
+  "#d4a84f", // Ocre dorado
+  "#96738c", // Púrpura ciruela
+  "#cc8448", // Siena tostada
+  "#5f8d8b", // Verde azulado antiguo
+  "#c47b7b", // Rosa antiguo
+  "#8e8d7a", // Gris piedra
+  "#b56338", // Óxido
+  "#688c73", // Verde bosque
+  "#876c99"  // Lavanda apagada
+];
+
+const RANKS = [[900, "Cónsul"], [1100, "Canciller"], [1300, "Estadista"], [1500, "Emperador"], [1800, "Soberano"], [1e9, "Arquitecto Mundial"]];
+const rank = e => RANKS.find(r => e < r[0])[1];
+const C = { invest: 100, recruit: 80, research: 150, fortify: 70, propaganda: 60, sabotage: 90 };
+const $ = id => document.getElementById(id);
+const ld = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+let elo = +ld("pm_elo") || 1000;
+let N, owner, al, me, turn, tax, sel, diff, over, pts, hold;
+
+$("elo").textContent = elo;
+$("rk").textContent = rank(elo);
+$("pick").innerHTML = R.map(r => `<option value="${r.id}">${r.n}</option>`).join("");
+
+const log = (t, c = "") => {
+  const l = $("log");
+  l.innerHTML += `<div class="${c}">${t}</div>`;
+  l.scrollTop = 1e9;
+};
+
+function codigo() {
+  const i = $("cod"), c = i.value.trim().toLowerCase();
+  i.value = "";
+  if (c == "x2") {
+    elo *= 2;
+    sv("pm_elo", elo);
+    $("elo").textContent = elo;
+    $("rk").textContent = rank(elo);
+    $("cm").textContent = "✒️ Cifrado aceptado: Prestigio duplicado.";
+  } else {
+    $("cm").textContent = "✖️ Cifrado desconocido en los archivos.";
+  }
+}
+
+function start() {
+  me = +$("pick").value;
+  diff = +$("diff").value;
+  turn = 1;
+  tax = 0.3;
+  sel = null;
+  over = false;
+  hold = 0;
+  pts = 3 + (diff == 0 ? 1 : 0);
+  owner = R.map(r => r.id);
+  al = R.map(() => new Set());
+  N = R.map(r => ({
+    id: r.id,
+    n: r.n,
+    gdp: 80 + Math.random() * 60 | 0,
+    army: 20 + Math.random() * 20 | 0,
+    money: 100,
+    ap: 60,
+    alive: true,
+    tech: 0,
+    def: 0
+  }));
+  N[me].gdp += 20;
+  $("menu").style.display = "none";
+  $("mt").textContent = "Presidente Mundial";
+  $("log").innerHTML = "";
+  log("📜 Has jurado el cargo como mandatario supremo de " + N[me].n + ".", "y");
+  draw();
+}
+
+const mine = id => owner.map((o, i) => o == id ? i : -1).filter(i => i >= 0);
+const isAl = (a, b) => al[a].has(b);
+const nbrs = id => [...new Set(mine(id).flatMap(r => R[r].nb).map(r => owner[r]).filter(o => o != id))];
+const power = n => n.army * (1 + n.tech * 0.1);
+
+function draw() {
+  if (sel != null && (!N[sel].alive)) sel = null;
+  const my = nbrs(me);
+
+  // Decoración cartográfica de fondo (Meridianos, paralelos, rosa de los vientos y rutas)
+  const decor = `
+    <defs>
+      <radialGradient id="oceanGrad" cx="50%" cy="50%" r="70%">
+        <stop offset="0%" stop-color="#d5dfd1"/>
+        <stop offset="100%" stop-color="#a8b8a4"/>
+      </radialGradient>
+      <filter id="paperShadow" x="-5%" y="-5%" width="110%" height="110%">
+        <feDropShadow dx="1.5" dy="2" stdDeviation="1.5" flood-color="#2a1d12" flood-opacity="0.35"/>
+      </filter>
+    </defs>
+    <rect width="1000" height="500" fill="url(#oceanGrad)"/>
+    
+    <!-- Retícula de Latitud y Longitud -->
+    <g class="grid-line">
+      <line x1="0" y1="100" x2="1000" y2="100"/>
+      <line x1="0" y1="180" x2="1000" y2="180" stroke-dasharray="4 4"/>
+      <line x1="0" y1="260" x2="1000" y2="260" stroke-width="1.2"/>
+      <line x1="0" y1="340" x2="1000" y2="340" stroke-dasharray="4 4"/>
+      <line x1="0" y1="420" x2="1000" y2="420"/>
+      <line x1="166" y1="0" x2="166" y2="500"/>
+      <line x1="333" y1="0" x2="333" y2="500"/>
+      <line x1="500" y1="0" x2="500" y2="500" stroke-width="1.2"/>
+      <line x1="666" y1="0" x2="666" y2="500"/>
+      <line x1="833" y1="0" x2="833" y2="500"/>
+    </g>
+
+    <!-- Rutas marítimas de conexión estratégica -->
+    <g class="sea-route">
+      <path d="M 285,125 Q 375,95 455,125"/> <!-- Atlántico Norte -->
+      <path d="M 255,245 Q 345,215 435,205"/> <!-- Atlántico Central -->
+      <path d="M 365,335 Q 430,315 492,305"/> <!-- Atlántico Sur -->
+      <path d="M 55,90 L 15,90 M 915,85 L 985,85"/> <!-- Estrecho de Bering -->
+      <path d="M 795,285 Q 825,310 835,330"/> <!-- Ruta Oceanía -->
+    </g>
+
+    <!-- Textos Oceánicos Vintage -->
+    <text x="385" y="185" class="decor-txt" transform="rotate(-12 385 185)">MARE ATLANTICUM</text>
+    <text x="115" y="340" class="decor-txt">OCEANUS PACIFICUS</text>
+    <text x="655" y="345" class="decor-txt">MARE INDICUM</text>
+    <text x="500" y="255" class="decor-txt" style="font-size:8px;letter-spacing:5px">AEQUATOR</text>
+
+    <!-- Rosa de los Vientos -->
+    <g transform="translate(88, 425)" opacity="0.65">
+      <circle cx="0" cy="0" r="28" fill="none" stroke="#3b2a1a" stroke-width="1"/>
+      <circle cx="0" cy="0" r="24" fill="none" stroke="#3b2a1a" stroke-width="0.6" stroke-dasharray="2 2"/>
+      <polygon points="0,-34 5,-5 34,0 5,5 0,34 -5,5 -34,0 -5,-5" fill="#3b2a1a"/>
+      <polygon points="0,-34 5,-5 0,0" fill="#8b261d"/>
+      <polygon points="34,0 5,5 0,0" fill="#8b261d"/>
+      <polygon points="0,34 -5,5 0,0" fill="#8b261d"/>
+      <polygon points="-34,0 -5,-5 0,0" fill="#8b261d"/>
+      <text x="0" y="-37" style="font-family:'Cinzel',serif;font-size:9px;fill:#2a1d12;font-weight:800;text-anchor:middle">N</text>
+      <text x="0" y="44" style="font-family:'Cinzel',serif;font-size:8px;fill:#2a1d12;text-anchor:middle">S</text>
+      <text x="40" y="3" style="font-family:'Cinzel',serif;font-size:8px;fill:#2a1d12;text-anchor:middle">E</text>
+      <text x="-40" y="3" style="font-family:'Cinzel',serif;font-size:8px;fill:#2a1d12;text-anchor:middle">O</text>
+    </g>
+  `;
+
+  const countries = R.map(r => {
+    const o = owner[r.id];
+    const cl = ["land", sel == o ? "sel" : "", o != me && my.includes(o) && !isAl(me, o) ? "atk" : "", isAl(me, o) ? "ally" : ""].join(" ");
+    return `
+      <g filter="url(#paperShadow)">
+        <path data-i="${r.id}" class="${cl}" d="${r.d}" fill="${COL[o]}" fill-opacity="${o == me ? 0.95 : 0.82}"/>
+      </g>
+      <text class="map-lbl" x="${r.c[0]}" y="${r.c[1]}">${r.n.toUpperCase()}</text>
+      <text class="s" x="${r.c[0]}" y="${r.c[1] + 13}">⚔ ${N[o].army | 0}</text>
+      ${owner[r.id] == r.id && N[r.id].alive ? `<text x="${r.c[0]}" y="${r.c[1] - 13}" style="font-size:${r.id == me ? 18 : 13}px;fill:${r.id == me ? '#8b261d' : '#2a1d12'};text-anchor:middle;pointer-events:none">★</text>` : ""}
+    `;
+  }).join("");
+
+  $("map").innerHTML = decor + countries;
+
+  document.querySelectorAll("path.land").forEach(p => {
+    p.onclick = () => {
+      sel = owner[+p.dataset.i];
+      draw();
+    };
+  });
+
+  $("turn").textContent = turn;
+  const m = N[me];
+  const tg = sel != null && sel != me ? N[sel] : null;
+  const can = a => over || pts < 1 || m.money < (C[a] || 0);
+  const bar = (v, c) => `<div class="bar"><i style="width:${Math.max(0, Math.min(100, v))}%;background:${c}"></i></div>`;
+
+  $("side").innerHTML = `
+    <h1><span>${m.n}</span><span class="sub">Gobierno</span></h1>
+    <div class="st"><span>🪙 Arcas del Estado</span><b>${m.money | 0}</b></div>
+    <div class="st"><span>🏛️ Renta Nacional (PIB)</span><b>${m.gdp | 0}</b></div>
+    <div class="st"><span>⚔️ Divisiones Militares</span><b>${m.army | 0}</b></div>
+    <div class="st"><span>⚙️ Doctrina Técnica</span><b>Nivel ${m.tech}/5</b></div>
+    <div class="st"><span>🏰 Fortificaciones</span><b>+${m.def * 100 | 0}%</b></div>
+    <div class="st"><span>📜 Lealtad Popular</span><b>${m.ap | 0}%</b></div>
+    ${bar(m.ap, m.ap < 30 ? "#9e241b" : "#3a6b47")}
+    <div class="st"><span>🗺️ Territorios</span><b>${mine(me).length}/12${hold ? ` · Hegemonía ${hold}/3` : ""}</b></div>
+    <div class="st"><span>🕊️ Tratados</span><b>${[...al[me]].map(a => N[a].n).join(", ") || "Ninguno"}</b></div>
+    <div class="st"><span>✒️ Decretos Restantes</span><span class="pips">${"❖".repeat(pts) || "—"}</span></div>
+
+    <h3 id="tl">Carga Fiscal: ${tax * 100 | 0}%</h3>
+    <input type="range" min="10" max="60" value="${tax * 100}" oninput="tax=this.value/100;$('tl').textContent='Carga Fiscal: '+this.value+'%'">
+
+    <h3>Asuntos Internos y Defensa</h3>
+    <button ${can("invest") ? "disabled" : ""} onclick="act('invest')" title="PIB +8%">Fomento (100)</button>
+    <button ${can("recruit") ? "disabled" : ""} onclick="act('recruit')" title="+15 ejército">Leva (80)</button>
+    <button ${can("research") || m.tech >= 5 ? "disabled" : ""} onclick="act('research')" title="+10% poder militar">Academia (150)</button>
+    <button ${can("fortify") || m.def >= 0.5 ? "disabled" : ""} onclick="act('fortify')" title="+10% defensa">Bastiones (70)</button>
+    <button ${can("propaganda") ? "disabled" : ""} onclick="act('propaganda')" title="Aprobación +8">Gaceta (60)</button>
+    <button onclick="advise()">🦉 Canciller</button>
+
+    <h3>Asuntos Exteriores</h3>
+    ${tg ? `
+      <div class="st">
+        <span><i class="swatch" style="background:${COL[tg.id]}"></i><b>${tg.n}</b></span>
+        <span>⚔️${tg.army | 0} · 🏛️${tg.gdp | 0} · ⚙️${tg.tech}</span>
+      </div>
+      ${nbrs(me).includes(sel) && !isAl(me, sel) ? `<button class="pr" ${over || pts < 1 ? "disabled" : ""} onclick="act('attack')">⚔️ Declarar Guerra</button>` : ""}
+      ${isAl(me, sel) ? `<button ${over || pts < 1 ? "disabled" : ""} onclick="act('break')">Revocar Tratado</button>` : `<button ${over || pts < 1 ? "disabled" : ""} onclick="act('ally')">🕊️ Pactar Alianza</button>`}
+      ${!isAl(me, sel) ? `<button ${can("sabotage") ? "disabled" : ""} onclick="act('sabotage')">🗡️ Espionaje (90)</button>` : ""}
+      ${!nbrs(me).includes(sel) ? `<br><small>Sin frontera ni ruta directa para invasión.</small>` : ""}
+    ` : `<small>Selecciona una región en el atlas para inspeccionar.</small>`}
+
+    <h3>Potencias Extranjeras</h3>
+    <div style="max-height:135px;overflow-y:auto;padding-right:2px">
+      ${N.filter(n => n.alive && n.id != me).sort((a, b) => b.gdp - a.gdp).map(n => `
+        <div class="st" style="font-size:13.5px">
+          <span><i class="swatch" style="background:${COL[n.id]}"></i>${n.n}${isAl(me, n.id) ? " 🕊️" : ""}</span>
+          <span>🏛️${n.gdp | 0} · ⚔️${n.army | 0}</span>
+        </div>
+      `).join("")}
+    </div>
+
+    <br>
+    <button class="pr" style="width:100%;padding:9px" ${over ? "disabled" : ""} onclick="endTurn()">Clausurar Mes ▶</button>
+  `;
+}
+
+function kill(y) {
+  y.alive = false;
+  al[y.id].forEach(a => al[a].delete(y.id));
+  al[y.id].clear();
+  log(`🕯️ El gobierno de ${y.n} ha colapsado definitivamente.`, "y");
+}
+
+function doAct(n, a, t) {
+  const x = N[n], c = C[a] || 0, y = t != null ? N[t] : null;
+  if (x.money < c) return 0;
+  if (a == "invest") x.gdp *= 1.08;
+  else if (a == "recruit") x.army += 15;
+  else if (a == "research") {
+    if (x.tech >= 5) return 0;
+    x.tech++;
+    if (n == me) log("⚙️ La Academia alcanza la doctrina técnica nivel " + x.tech + ".", "g");
+  }
+  else if (a == "fortify") {
+    if (x.def >= 0.5) return 0;
+    x.def += 0.1;
+  }
+  else if (a == "propaganda") x.ap = Math.min(100, x.ap + 8);
+  else if (a == "sabotage") {
+    if (!y || !y.alive || isAl(n, t)) return 0;
+    if (Math.random() < 0.6) {
+      y.army *= 0.8;
+      y.gdp *= 0.95;
+      log(`🗡️ Agentes de ${x.n} sabotearon los arsenales de ${y.n}.`, n == me ? "g" : "b");
+    } else {
+      log(`📜 Espías de ${x.n} fueron capturados en ${y.n}.`);
+    }
+  }
+  else if (a == "ally") {
+    if (!y || !y.alive || isAl(n, t)) return 0;
+    if (Math.random() < 0.4 + (x.gdp > y.gdp ? 0.2 : 0) - diff * 0.1) {
+      al[n].add(t);
+      al[t].add(n);
+      log(`🕊️ ${x.n} y ${y.n} rubrican un tratado de alianza comercial.`, "g");
+    } else {
+      log(`✖️ La cancillería de ${y.n} rechaza la propuesta de ${x.n}.`);
+    }
+  }
+  else if (a == "break") {
+    if (!y || !isAl(n, t)) return 0;
+    al[n].delete(t);
+    al[t].delete(n);
+    log(`💔 ${x.n} denuncia y rompe su tratado con ${y.n}.`, "y");
+  }
+  else if (a == "attack") {
+    if (!y || !y.alive || isAl(n, t) || !nbrs(n).includes(t)) return 0;
+    const at = power(x) * (0.8 + Math.random() * 0.4);
+    const df = power(y) * (1.15 + y.def) * (0.8 + Math.random() * 0.4);
+    if (n == me) x.ap -= 3;
+    if (at > df) {
+      const fr = mine(t).filter(r => R[r].nb.some(k => owner[k] == n));
+      const r = fr[Math.random() * fr.length | 0];
+      const share = y.gdp / mine(t).length;
+      owner[r] = n;
+      y.gdp -= share;
+      x.gdp += share;
+      x.army *= 0.75;
+      y.army *= 0.5;
+      log(`⚔️ Las tropas de ${x.n} anexionan ${R[r].n} tras derrotar a ${y.n}.`, t == me ? "b" : n == me ? "g" : "");
+      if (!mine(t).length) kill(y);
+    } else {
+      x.army *= 0.6;
+      y.army *= 0.85;
+      log(`🏰 Las defensas de ${y.n} repelen la ofensiva de ${x.n}.`, n == me ? "b" : "");
+    }
+  }
+  else return 0;
+  x.money -= c;
+  return 1;
+}
+
+function act(a) {
+  if (over || pts < 1) return;
+  if (doAct(me, a, sel)) {
+    pts--;
+    if (check()) return;
+  }
+  draw();
+}
+
+function ai(id) {
+  const x = N[id];
+  for (let k = 0; k < 2; k++) {
+    const v = nbrs(id).filter(o => !isAl(id, o) && power(N[o]) * 1.2 < power(x) * (1 + diff * 0.2)).sort((a, b) => N[a].army - N[b].army)[0];
+    if (v != null && Math.random() < 0.45 + diff * 0.15) { doAct(id, "attack", v); continue; }
+    const r = Math.random();
+    if (r < 0.12) { const o = nbrs(id).filter(o => !isAl(id, o))[0]; if (o != null && o != me) { doAct(id, "ally", o); continue; } }
+    if (r < 0.3 && x.tech < 5 && doAct(id, "research")) continue;
+    if (r < 0.45 && doAct(id, "fortify")) continue;
+    if (r < 0.75 && doAct(id, "invest")) continue;
+    doAct(id, "recruit");
+  }
+}
+
+function check() {
+  if (owner[me] != me) return finish(false, "La capital ha caído en manos extranjeras.");
+  if (N[me].ap <= 0) return finish(false, "Revolución en las calles: tu mandato ha terminado.");
+  if (mine(me).length == 12) return finish(true, "¡Pax Mundial! Todas las regiones rinden pleitesía.");
+  return false;
+}
+
+function endTurn() {
+  if (over) return;
+  N.filter(n => n.alive && n.id != me).forEach(n => ai(n.id));
+  if (check()) return;
+  N.forEach(n => {
+    if (!n.alive) return;
+    const t = n.id == me ? tax : 0.3, k = mine(n.id).length;
+    n.money += n.gdp * (0.1 + t * 0.3) * (1 + k * 0.05) - n.army * 0.2;
+    n.money = Math.max(0, n.money);
+    n.gdp *= 1 + 0.012 - (t - 0.3) * 0.03 + (n.id != me ? diff * 0.004 : 0) + al[n.id].size * 0.003;
+    n.army *= 1.01;
+    if (n.id == me) n.ap = Math.max(0, Math.min(100, n.ap - (t - 0.3) * 30 + (Math.random() * 6 - 2.5) + (n.money > 100 ? 1 : 0)));
+  });
+  turn++;
+  pts = 3 + (diff == 0 ? 1 : 0);
+  const evs = [
+    ["🌪️ Calamidad climática en las provincias: lealtad -5%", m => m.ap -= 5],
+    ["📰 Escándalo en la prensa: lealtad -5%", m => m.ap -= 5],
+    ["⚓ Auge del comercio ultramarino: renta +5%", m => m.gdp *= 1.05],
+    ["⚔️ Deserción en los cuarteles: -10 divisiones", m => m.army = Math.max(5, m.army - 10)],
+    ["⚙️ Hallazgo en la Academia: +1 doctrina técnica", m => m.tech = Math.min(5, m.tech + 1)],
+    ["🪙 Empréstito internacional favorable: +80 arcas", m => m.money += 80]
+  ];
+  if (Math.random() < 0.4) {
+    const e = evs[Math.random() * evs.length | 0];
+    e[1](N[me]);
+    log(e[0], "y");
+  }
+  hold = mine(me).length >= 7 ? hold + 1 : 0;
+  if (hold >= 3) return finish(true, "Hegemonía consolidada: 3 meses controlando la mayor parte del globo.");
+  if (check()) return;
+  draw();
+}
+
+function finish(win, msg) {
+  over = true;
+  const opp = 1000 + diff * 150 + turn;
+  const exp = 1 / (1 + Math.pow(10, (opp - elo) / 400));
+  const d = Math.round(32 * ((win ? 1 : 0) - exp));
+  elo = Math.max(0, elo + d);
+  sv("pm_elo", elo);
+  $("elo").textContent = elo;
+  $("rk").textContent = rank(elo);
+  $("menu").style.display = "flex";
+  $("mt").textContent = (win ? "🏆 VICTORIA IMPERIAL" : "🕯️ CAÍDA DEL GOBIERNO") + " (" + (d >= 0 ? "+" : "") + d + " Prestigio)";
+  log(msg, win ? "g" : "b");
+  draw();
+  return true;
+}
+
+function advise() {
+  const m = N[me];
+  const v = nbrs(me).filter(o => !isAl(me, o)).sort((a, b) => power(N[a]) - power(N[b]))[0];
+  let s;
+  if (m.ap < 30) s = "El pueblo murmura revuelta, Excelencia: rebajad los tributos o financiad la Gaceta.";
+  else if (v != null && power(m) > power(N[v]) * 1.4) s = `Nuestras fuerzas superan con creces a ${N[v].n}; es momento de marchar.`;
+  else if (m.money >= 100 && m.gdp < 150 + turn * 5) s = "Conviene fomentar la industria interna antes de emprender campañas.";
+  else if (m.army < 40) s = "Las fronteras están desguarnecidas; ordenad una leva de inmediato.";
+  else s = "Sugiero asegurar un tratado diplomático o avanzar en la Academia militar.";
+  log("🦉 Canciller: «" + s + "»", "y");
+}
+</script>
+</body>
+</html>
